@@ -1,0 +1,56 @@
+[project]
+name = "vgrid"
+version = "6.9.3.1"
+description = "A library of functions for numerical weather prediction used mainly by Environment and Climate Change Canada"
+channels = ["fortiers", "conda-forge", "nodefaults"]
+platforms = ["linux-64"]
+
+[dependencies]
+cmake = ">=3.20.0"
+make = "*"
+gcc = "<=9.5.0"
+gxx = "<=9.5.0"
+gfortran = "<=9.5.0"
+openmpi = "*"
+git = "*"
+eccc_librmn = "*"
+eccc_libtdpack = "*"
+
+[build-dependencies]
+doxygen = "*"
+graphviz = "*"
+
+[tasks.configure]
+cmd = ["mkdir", "-p", "build"]
+cwd = "." 
+
+[tasks.cmake]
+cmd = ["bash", "-c", "unset EC_ARCH && cmake ../. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -DCOMPILER_SUITE=GNU -DCMAKE_MODULE_PATH=.."]
+cwd = "build"
+depends-on = ["configure"]
+
+[tasks.build]
+cmd = ["make", "-j8"]
+cwd = "build"
+depends-on = ["cmake"]
+
+[tasks.install]
+cmd = ["make", "install"]
+cwd = "build"
+depends-on = ["build"]
+
+[tasks.doc]
+cmd = ["make", "doc"]
+cwd = "build"
+depends-on = ["cmake"]
+
+[tasks.all]
+depends-on = ["install"] 
+
+[tasks.conda-build]
+cmd = "rm -rf /tmp/conda-build/* && rattler-build build --recipe conda.recipe/recipe.yaml --output-dir /tmp/conda-build -c fortiers -c conda-forge"
+
+[tasks.conda-upload]
+cmd = "rattler-build upload anaconda -v -o fortiers /tmp/conda-build/linux-64/eccc_libvgrid-*.conda"
+depends-on = ["conda-build"]
+
